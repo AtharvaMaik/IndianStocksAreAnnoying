@@ -107,9 +107,10 @@ export async function getLiveMarketStocks() {
 }
 
 export async function getStocks() {
-  const universePromise = process.env.VERCEL
-    ? Promise.resolve(bundledStockUniverse("Bundled stock list for fast Vercel first paint"))
-    : getStockUniverse();
+  if (process.env.VERCEL) {
+    return bundledStockUniverse("Bundled stock list for fast Vercel first paint");
+  }
+  const universePromise = getStockUniverse();
   const [universe, live] = await Promise.allSettled([
     universePromise,
     timeoutAfter(getLiveMarketStocks(), 1800, "Live market list timed out")

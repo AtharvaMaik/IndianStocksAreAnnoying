@@ -11,8 +11,9 @@ import { makeFreshness } from "@/lib/freshness";
 export default async function DashboardPage() {
   const [stocksResponse, watchlist] = await Promise.all([getStocks(), getWatchlist()]);
   const stocks = stocksResponse.data.filter((stock) => stock.symbol);
-  const featured = stocks.filter((stock) => stock.lastPrice !== undefined).slice(0, 4);
-  const chartSymbol = featured[0]?.symbol ?? stocks[0]?.symbol;
+  const pricedStocks = stocks.filter((stock) => stock.lastPrice !== undefined);
+  const featured = (pricedStocks.length ? pricedStocks : stocks).slice(0, 4);
+  const chartSymbol = pricedStocks[0]?.symbol;
   const history = chartSymbol
     ? await Promise.race([
         getStockHistory(chartSymbol, "1M"),
