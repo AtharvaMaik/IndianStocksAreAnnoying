@@ -55,6 +55,16 @@ const formatAxis = (value: number) =>
     maximumFractionDigits: Math.abs(value) >= 100 ? 0 : 2
   });
 
+const chartColors = {
+  text: "var(--text)",
+  muted: "var(--muted)",
+  grid: "var(--line)",
+  blue: "var(--blue)",
+  green: "var(--green)",
+  red: "var(--red)",
+  amber: "var(--amber)"
+};
+
 export function MiniSparkline({ positive }: { positive: boolean }) {
   const data = [4, 6, 5, 7, 4, 5, 8, 7].map((value, index) => ({ index, value: positive ? value : 10 - value }));
   return (
@@ -80,16 +90,16 @@ export function PriceChart({ data }: { data: Candle[] }) {
               <stop offset="95%" stopColor="#435ebe" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#edf0f6" />
-          <XAxis dataKey="time" minTickGap={34} tick={{ fill: "#6b7280", fontSize: 12 }} />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.grid} />
+          <XAxis dataKey="time" minTickGap={34} tick={{ fill: chartColors.muted, fontSize: 12 }} />
           <YAxis
             domain={domain}
-            tick={{ fill: "#6b7280", fontSize: 12 }}
+            tick={{ fill: chartColors.muted, fontSize: 12 }}
             width={72}
             tickFormatter={(value) => formatAxis(Number(value))}
           />
           <Tooltip />
-          <Area type="monotone" dataKey="close" stroke="#435ebe" fill="url(#price)" strokeWidth={2} />
+          <Area type="monotone" dataKey="close" stroke={chartColors.blue} fill="url(#price)" strokeWidth={2} />
         </AreaChart>
       </ResponsiveContainer>
     </div>
@@ -139,13 +149,13 @@ export function IndicatorChart({
     <div style={{ height: 390 }}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#edf0f6" />
-          <XAxis dataKey="time" minTickGap={34} tick={{ fill: "#6b7280", fontSize: 12 }} />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.grid} />
+          <XAxis dataKey="time" minTickGap={34} tick={{ fill: chartColors.muted, fontSize: 12 }} />
           {priceLike ? (
             <YAxis
               yAxisId="indicator"
               domain={priceDomain}
-              tick={{ fill: "#6b7280", fontSize: 12 }}
+              tick={{ fill: chartColors.muted, fontSize: 12 }}
               width={74}
               tickFormatter={(value) => formatAxis(Number(value))}
             />
@@ -153,7 +163,7 @@ export function IndicatorChart({
             <YAxis
               yAxisId="indicator"
               domain={indicatorDomain(metric, data)}
-              tick={{ fill: "#6b7280", fontSize: 12 }}
+              tick={{ fill: chartColors.muted, fontSize: 12 }}
               width={70}
               tickFormatter={(value) => formatAxis(Number(value))}
             />
@@ -165,13 +175,13 @@ export function IndicatorChart({
             ]}
           />
           {priceLike ? (
-            <Line yAxisId="indicator" type="monotone" dataKey="close" stroke="#9ca3af" dot={false} strokeWidth={1.4} />
+            <Line yAxisId="indicator" type="monotone" dataKey="close" stroke={chartColors.muted} dot={false} strokeWidth={1.4} />
           ) : null}
           {referenceLines(metric).map((value) => (
             <ReferenceLine
               yAxisId="indicator"
               y={value}
-              stroke="#cbd5e1"
+              stroke={chartColors.grid}
               strokeDasharray="4 4"
               ifOverflow="extendDomain"
               key={value}
@@ -182,7 +192,7 @@ export function IndicatorChart({
             type="monotone"
             dataKey={metric}
             name={label}
-            stroke="#0f9f6e"
+            stroke={chartColors.green}
             dot={false}
             activeDot={{ r: 4 }}
             strokeWidth={2.4}
@@ -194,7 +204,7 @@ export function IndicatorChart({
               type="monotone"
               dataKey="macdSignal"
               name="MACD Signal"
-              stroke="#435ebe"
+              stroke={chartColors.blue}
               dot={false}
               strokeWidth={1.8}
               connectNulls
@@ -202,8 +212,8 @@ export function IndicatorChart({
           ) : null}
           {metric === "bollingerUpper" ? (
             <>
-              <Line yAxisId="indicator" type="monotone" dataKey="bollingerMiddle" name="Bollinger Mid" stroke="#435ebe" dot={false} strokeWidth={1.8} connectNulls />
-              <Line yAxisId="indicator" type="monotone" dataKey="bollingerLower" name="Bollinger Lower" stroke="#d64545" dot={false} strokeWidth={1.8} connectNulls />
+              <Line yAxisId="indicator" type="monotone" dataKey="bollingerMiddle" name="Bollinger Mid" stroke={chartColors.blue} dot={false} strokeWidth={1.8} connectNulls />
+              <Line yAxisId="indicator" type="monotone" dataKey="bollingerLower" name="Bollinger Lower" stroke={chartColors.red} dot={false} strokeWidth={1.8} connectNulls />
             </>
           ) : null}
         </LineChart>
@@ -218,18 +228,18 @@ export function MovingAverageChart({ data }: { data: IndicatorPoint[] }) {
     <div style={{ height: 390 }}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#edf0f6" />
-          <XAxis dataKey="time" minTickGap={34} tick={{ fill: "#6b7280", fontSize: 12 }} />
-          <YAxis domain={domain} tick={{ fill: "#6b7280", fontSize: 12 }} width={74} tickFormatter={(value) => formatAxis(Number(value))} />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.grid} />
+          <XAxis dataKey="time" minTickGap={34} tick={{ fill: chartColors.muted, fontSize: 12 }} />
+          <YAxis domain={domain} tick={{ fill: chartColors.muted, fontSize: 12 }} width={74} tickFormatter={(value) => formatAxis(Number(value))} />
           <Tooltip
             formatter={(value, name) => [
               Number(value).toLocaleString("en-IN", { maximumFractionDigits: 2 }),
               name === "close" ? "Close" : name === "sma20" ? "SMA 20" : "EMA 20"
             ]}
           />
-          <Line type="monotone" dataKey="close" name="Close" stroke="#9ca3af" dot={false} strokeWidth={1.5} />
-          <Line type="monotone" dataKey="sma20" name="SMA 20" stroke="#435ebe" dot={false} strokeWidth={2.2} connectNulls />
-          <Line type="monotone" dataKey="ema20" name="EMA 20" stroke="#0f9f6e" dot={false} strokeWidth={2.2} connectNulls />
+          <Line type="monotone" dataKey="close" name="Close" stroke={chartColors.muted} dot={false} strokeWidth={1.5} />
+          <Line type="monotone" dataKey="sma20" name="SMA 20" stroke={chartColors.blue} dot={false} strokeWidth={2.2} connectNulls />
+          <Line type="monotone" dataKey="ema20" name="EMA 20" stroke={chartColors.green} dot={false} strokeWidth={2.2} connectNulls />
         </LineChart>
       </ResponsiveContainer>
     </div>
@@ -242,21 +252,21 @@ export function SwingSetupChart({ data, analysis }: { data: IndicatorPoint[]; an
     <div style={{ height: 380 }}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#edf0f6" />
-          <XAxis dataKey="time" minTickGap={34} tick={{ fill: "#6b7280", fontSize: 12 }} />
-          <YAxis domain={domain} tick={{ fill: "#6b7280", fontSize: 12 }} width={74} tickFormatter={(value) => formatAxis(Number(value))} />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.grid} />
+          <XAxis dataKey="time" minTickGap={34} tick={{ fill: chartColors.muted, fontSize: 12 }} />
+          <YAxis domain={domain} tick={{ fill: chartColors.muted, fontSize: 12 }} width={74} tickFormatter={(value) => formatAxis(Number(value))} />
           <Tooltip formatter={(value, name) => [Number(value).toLocaleString("en-IN", { maximumFractionDigits: 2 }), String(name)]} />
           {analysis.support ? (
-            <ReferenceLine y={analysis.support.high} stroke="#0f9f6e" strokeDasharray="4 4" label="Support" />
+            <ReferenceLine y={analysis.support.high} stroke={chartColors.green} strokeDasharray="4 4" label="Support" />
           ) : null}
           {analysis.resistance ? (
-            <ReferenceLine y={analysis.resistance.low} stroke="#d68b00" strokeDasharray="4 4" label="Resistance" />
+            <ReferenceLine y={analysis.resistance.low} stroke={chartColors.amber} strokeDasharray="4 4" label="Resistance" />
           ) : null}
-          {analysis.stopLoss ? <ReferenceLine y={analysis.stopLoss} stroke="#d64545" strokeDasharray="5 5" label="Stop" /> : null}
-          {analysis.target ? <ReferenceLine y={analysis.target} stroke="#435ebe" strokeDasharray="5 5" label="Target" /> : null}
-          <Line type="monotone" dataKey="close" name="Close" stroke="#111827" dot={false} strokeWidth={2.2} />
-          <Line type="monotone" dataKey="ema20" name="EMA 20" stroke="#0f9f6e" dot={false} strokeWidth={1.8} connectNulls />
-          <Line type="monotone" dataKey="sma20" name="SMA 20" stroke="#435ebe" dot={false} strokeWidth={1.8} connectNulls />
+          {analysis.stopLoss ? <ReferenceLine y={analysis.stopLoss} stroke={chartColors.red} strokeDasharray="5 5" label="Stop" /> : null}
+          {analysis.target ? <ReferenceLine y={analysis.target} stroke={chartColors.blue} strokeDasharray="5 5" label="Target" /> : null}
+          <Line type="monotone" dataKey="ema20" name="EMA 20" stroke={chartColors.green} dot={false} strokeWidth={1.8} connectNulls />
+          <Line type="monotone" dataKey="sma20" name="SMA 20" stroke={chartColors.blue} dot={false} strokeWidth={1.8} connectNulls />
+          <Line type="monotone" dataKey="close" name="Close" stroke={chartColors.text} dot={false} activeDot={{ r: 4 }} strokeWidth={3} />
         </LineChart>
       </ResponsiveContainer>
     </div>
