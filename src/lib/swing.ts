@@ -25,35 +25,6 @@ const average = (values: number[]) => (values.length ? values.reduce((sum, value
 
 const latestPoint = (points: IndicatorPoint[]) => [...points].reverse().find((point) => point.rsi14 !== null || point.momentum10 !== null);
 
-const isOptimizedContinuationSetup = ({
-  score,
-  distanceFromLow,
-  rsi,
-  roc,
-  riskReward,
-  expectedUpsidePercent,
-  closeAboveEma
-}: {
-  score: number;
-  distanceFromLow: number;
-  rsi: number | null;
-  roc: number | null;
-  riskReward: number | null;
-  expectedUpsidePercent: number;
-  closeAboveEma: boolean;
-}) =>
-  score >= 56 &&
-  distanceFromLow <= 18 &&
-  rsi !== null &&
-  rsi >= 35 &&
-  rsi <= 60 &&
-  roc !== null &&
-  roc >= 4 &&
-  riskReward !== null &&
-  riskReward >= 0.8 &&
-  expectedUpsidePercent <= 14 &&
-  closeAboveEma;
-
 export function analyzeSwingSetup(stock: StockDetail, candles: Candle[], indicators: IndicatorPoint[]): SwingAnalysis {
   const usable = candles.slice(-90);
   const current = stock.lastPrice ?? usable.at(-1)?.close ?? null;
@@ -164,24 +135,8 @@ export function analyzeSwingSetup(stock: StockDetail, candles: Candle[], indicat
     cautions.push("Risk/reward is not strong enough yet.");
   }
 
-  const optimizedContinuation = isOptimizedContinuationSetup({
-    score,
-    distanceFromLow,
-    rsi,
-    roc,
-    riskReward,
-    expectedUpsidePercent,
-    closeAboveEma
-  });
-
-  if (optimizedContinuation) {
-    reasons.push("Passed the optimized +10% continuation filter.");
-  } else if (score >= 52) {
-    cautions.push("Backtest filter is not confirmed for a higher-probability +10% setup.");
-  }
-
-  const signal: SwingSignal = optimizedContinuation ? (score >= 64 ? "BUY" : "WATCH") : score <= 28 ? "SELL" : "AVOID";
-  const confidence = optimizedContinuation && score >= 64 ? "High" : optimizedContinuation ? "Medium" : "Low";
+  const signal: SwingSignal = score >= 72 ? "BUY" : score >= 52 ? "WATCH" : score <= 28 ? "SELL" : "AVOID";
+  const confidence = score >= 72 ? "High" : score >= 52 ? "Medium" : "Low";
 
   return {
     signal,

@@ -54,18 +54,17 @@ function makeStock(lastPrice = 110): StockDetail {
 }
 
 describe("swing setup analysis", () => {
-  test("promotes only optimized continuation setups to BUY", () => {
+  test("promotes high-scoring setups to BUY", () => {
     const analysis = analyzeSwingSetup(makeStock(), makeCandles(110), makeIndicators({}));
 
     expect(analysis.signal).toBe("BUY");
-    expect(analysis.reasons).toContain("Passed the optimized +10% continuation filter.");
+    expect(analysis.confidence).toBe("High");
   });
 
-  test("avoids high-scoring setups when ROC strength misses the optimized filter", () => {
+  test("keeps the old rating thresholds even when ROC strength is weaker", () => {
     const analysis = analyzeSwingSetup(makeStock(), makeCandles(110), makeIndicators({ roc12: 1 }));
 
     expect(analysis.score).toBeGreaterThanOrEqual(72);
-    expect(analysis.signal).toBe("AVOID");
-    expect(analysis.cautions).toContain("Backtest filter is not confirmed for a higher-probability +10% setup.");
+    expect(analysis.signal).toBe("BUY");
   });
 });
