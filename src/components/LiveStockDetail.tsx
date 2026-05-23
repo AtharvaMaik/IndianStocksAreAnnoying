@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import type { Candle, Freshness, IndicatorPoint, StockDetail } from "@/types";
 import { marketDataPollMs } from "@/lib/polling";
+import type { SwingAnalysis } from "@/lib/swing";
 import { DataSourceBadge } from "./DataSourceBadge";
 import { FreshnessBadge } from "./FreshnessBadge";
 import { RangeIndicatorPanel } from "./RangeIndicatorPanel";
+import { SwingAssistantPanel } from "./SwingAssistantPanel";
 import { WatchlistButton } from "./WatchlistButton";
 
 const format = (value: string | number | null | undefined) => {
@@ -20,7 +22,8 @@ export function LiveStockDetail({
   initialCandles,
   initialIndicators,
   initialHistoryFreshness,
-  initiallyTracked
+  initiallyTracked,
+  swingAnalysis
 }: {
   symbol: string;
   initialStock: StockDetail;
@@ -29,6 +32,7 @@ export function LiveStockDetail({
   initialIndicators: IndicatorPoint[];
   initialHistoryFreshness: Freshness;
   initiallyTracked: boolean;
+  swingAnalysis?: SwingAnalysis | null;
 }) {
   const [stock, setStock] = useState(initialStock);
   const [quoteFreshness, setQuoteFreshness] = useState(initialQuoteFreshness);
@@ -101,6 +105,7 @@ export function LiveStockDetail({
           </div>
         ))}
       </section>
+      {swingAnalysis ? <SwingAssistantPanel analysis={swingAnalysis} indicators={initialIndicators} /> : null}
       <RangeIndicatorPanel
         symbol={symbol}
         initialCandles={initialCandles}

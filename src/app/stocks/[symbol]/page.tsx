@@ -2,13 +2,14 @@ import { AppShell } from "@/components/AppShell";
 import { LiveStockDetail } from "@/components/LiveStockDetail";
 import { calculateIndicators } from "@/lib/indicators";
 import { makeFreshness } from "@/lib/freshness";
-import { getStockHistory, getStockQuote } from "@/lib/nse/service";
+import { getStockHistory, getStockQuote, getTop100Stocks } from "@/lib/nse/service";
+import { analyzeSwingSetup } from "@/lib/swing";
 import { getWatchlist } from "@/lib/store";
 import type { StockDetail } from "@/types";
 
 export default async function StockDetailPage({ params }: { params: { symbol: string } }) {
   const symbol = params.symbol.toUpperCase();
-  const [quoteResponse, historyResponse, watchlist] = await Promise.all([
+  const [quoteResponse, historyResponse, watchlist, top100Response] = await Promise.all([
     getStockQuote(symbol).catch((error) => ({
       data: {
         symbol,
@@ -31,11 +32,14 @@ export default async function StockDetailPage({ params }: { params: { symbol: st
       data: [],
       freshness: makeFreshness("nse-historical-equity", null, "error", error instanceof Error ? error.message : "No candles")
     })),
-    getWatchlist()
+    getWatchlist(),
+    getTop100Stocks()
   ]);
 
   const tracked = watchlist.some((entry) => entry.symbol === symbol);
   const indicators = calculateIndicators(historyResponse.data);
+  const top100Symbols = new Set(top100Response.data.map((stock) => stock.symbol));
+  const swingAnalysis = top100Symbols.has(symbol) ? analyzeSwingSetup(quoteResponse.data, historyResponse.data, indicators) : null;
 
   return (
     <AppShell>
@@ -48,9 +52,9 @@ export default async function StockDetailPage({ params }: { params: { symbol: st
           initialIndicators={indicators}
           initialHistoryFreshness={historyResponse.freshness}
           initiallyTracked={tracked}
+          swingAnalysis={swingAnalysis}
         />
       </div>
     </AppShell>
   );
 }
-

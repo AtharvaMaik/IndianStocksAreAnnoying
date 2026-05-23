@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import type { Candle, IndicatorPoint } from "@/types";
 import type { IndicatorKey } from "@/lib/indicatorSummary";
+import type { SwingAnalysis } from "@/lib/swing";
 
 function valuesFor<T extends object>(data: T[], keys: Array<keyof T>) {
   const values: number[] = [];
@@ -229,6 +230,33 @@ export function MovingAverageChart({ data }: { data: IndicatorPoint[] }) {
           <Line type="monotone" dataKey="close" name="Close" stroke="#9ca3af" dot={false} strokeWidth={1.5} />
           <Line type="monotone" dataKey="sma20" name="SMA 20" stroke="#435ebe" dot={false} strokeWidth={2.2} connectNulls />
           <Line type="monotone" dataKey="ema20" name="EMA 20" stroke="#0f9f6e" dot={false} strokeWidth={2.2} connectNulls />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+export function SwingSetupChart({ data, analysis }: { data: IndicatorPoint[]; analysis: SwingAnalysis }) {
+  const domain = paddedDomain(data, ["close", "ema20", "sma20"], { padding: 0.08 });
+  return (
+    <div style={{ height: 380 }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#edf0f6" />
+          <XAxis dataKey="time" minTickGap={34} tick={{ fill: "#6b7280", fontSize: 12 }} />
+          <YAxis domain={domain} tick={{ fill: "#6b7280", fontSize: 12 }} width={74} tickFormatter={(value) => formatAxis(Number(value))} />
+          <Tooltip formatter={(value, name) => [Number(value).toLocaleString("en-IN", { maximumFractionDigits: 2 }), String(name)]} />
+          {analysis.support ? (
+            <ReferenceLine y={analysis.support.high} stroke="#0f9f6e" strokeDasharray="4 4" label="Support" />
+          ) : null}
+          {analysis.resistance ? (
+            <ReferenceLine y={analysis.resistance.low} stroke="#d68b00" strokeDasharray="4 4" label="Resistance" />
+          ) : null}
+          {analysis.stopLoss ? <ReferenceLine y={analysis.stopLoss} stroke="#d64545" strokeDasharray="5 5" label="Stop" /> : null}
+          {analysis.target ? <ReferenceLine y={analysis.target} stroke="#435ebe" strokeDasharray="5 5" label="Target" /> : null}
+          <Line type="monotone" dataKey="close" name="Close" stroke="#111827" dot={false} strokeWidth={2.2} />
+          <Line type="monotone" dataKey="ema20" name="EMA 20" stroke="#0f9f6e" dot={false} strokeWidth={1.8} connectNulls />
+          <Line type="monotone" dataKey="sma20" name="SMA 20" stroke="#435ebe" dot={false} strokeWidth={1.8} connectNulls />
         </LineChart>
       </ResponsiveContainer>
     </div>

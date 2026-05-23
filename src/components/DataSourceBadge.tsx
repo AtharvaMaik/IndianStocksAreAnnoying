@@ -6,6 +6,10 @@ function sourceLabel(source?: string) {
       return "NSE Quote";
     case "nse-live-equity-market":
       return "NSE Live";
+    case "nse-nifty-100":
+      return "NSE NIFTY 100";
+    case "bundled-nifty-100":
+      return "Bundled NIFTY 100";
     case "nse-equity-list":
       return "NSE List";
     case "bundled-nse-equity-list":

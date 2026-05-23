@@ -488,6 +488,77 @@ select {
   padding: 42px 18px 18px;
 }
 
+.metric-card.compact {
+  padding: 16px;
+}
+
+.swing-panel {
+  border-color: rgba(67, 94, 190, 0.24);
+}
+
+.signal-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 74px;
+  border-radius: 999px;
+  padding: 8px 12px;
+  color: white;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.signal-pill.buy {
+  background: var(--green);
+}
+
+.signal-pill.watch {
+  background: var(--amber);
+}
+
+.signal-pill.sell,
+.signal-pill.avoid {
+  background: var(--red);
+}
+
+.swing-grid {
+  display: grid;
+  grid-template-columns: minmax(170px, 1.1fr) repeat(5, minmax(120px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.swing-score {
+  display: grid;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 16px;
+}
+
+[data-theme="dark"] .swing-score {
+  background: #0b1220;
+}
+
+.swing-score strong {
+  font-size: 30px;
+}
+
+.swing-notes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.swing-notes ul {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+}
+
 .card-source {
   position: absolute;
   top: 12px;
@@ -562,7 +633,9 @@ select {
   .dashboard-grid,
   .metric-grid,
   .indicator-summary-grid,
-  .stock-strip {
+  .stock-strip,
+  .swing-grid,
+  .swing-notes {
     grid-template-columns: 1fr;
   }
 

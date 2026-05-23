@@ -4,14 +4,14 @@ import { PriceChart } from "@/components/charts";
 import { StockCard } from "@/components/StockCard";
 import { StockTable } from "@/components/StockTable";
 import { WatchlistPanel } from "@/components/WatchlistPanel";
-import { getStockHistory, getStocks } from "@/lib/nse/service";
+import { getStockHistory, getStocks, getTop100Stocks } from "@/lib/nse/service";
 import { getWatchlist } from "@/lib/store";
 import { makeFreshness } from "@/lib/freshness";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const [stocksResponse, watchlist] = await Promise.all([getStocks(), getWatchlist()]);
+  const [stocksResponse, top100Response, watchlist] = await Promise.all([getStocks(), getTop100Stocks(), getWatchlist()]);
   const stocks = stocksResponse.data.filter((stock) => stock.symbol);
   const pricedStocks = stocks.filter((stock) => stock.lastPrice !== undefined);
   const featured = (pricedStocks.length ? pricedStocks : stocks).slice(0, 4);
@@ -50,6 +50,21 @@ export default async function DashboardPage() {
             {history.data.length ? <PriceChart data={history.data} /> : <div className="empty-state">No live candle data available yet.</div>}
           </div>
           <WatchlistPanel entries={watchlist} stocks={stocks} />
+        </section>
+        <section className="panel" style={{ marginTop: 24 }}>
+          <div className="panel-header">
+            <div>
+              <div className="panel-title">Top 100 Swing Universe</div>
+              <div className="muted">NIFTY 100 stocks eligible for swing assistant scans</div>
+            </div>
+            <FreshnessBadge freshness={top100Response.freshness} />
+          </div>
+          <StockTable stocks={top100Response.data} limit={20} />
+          <div style={{ marginTop: 12 }}>
+            <a className="ghost-button" href="/stocks">
+              Browse all stocks
+            </a>
+          </div>
         </section>
         <section className="panel" style={{ marginTop: 24 }}>
           <div className="panel-header">

@@ -5,6 +5,7 @@ import { readCache, writeCache } from "@/lib/store";
 import { getYahooHistory, getYahooQuote } from "@/lib/yahoo/service";
 import { getGoogleFundamentals } from "@/lib/google/service";
 import stockUniverseFallback from "@/data/stockUniverseFallback.json";
+import { nifty100FallbackSymbols } from "@/data/nifty100Fallback";
 import { fetchNseJson, fetchNseText } from "./client";
 import { normalizeHistory, normalizeQuote, normalizeSummary } from "./normalize";
 
@@ -114,6 +115,21 @@ export async function getLiveMarketStocks() {
     );
     return (payload.data ?? []).map((row) => normalizeSummary(row, "nse-live-equity-market")).filter((row) => row.symbol);
   }, 45);
+}
+
+export async function getTop100Stocks() {
+  const result = await liveOrCache<StockSummary[]>("nifty-100", "nse-nifty-100", async () => {
+    const payload = await fetchNseJson<{ data?: Record<string, unknown>[] }>("/api/equity-stockIndices?index=NIFTY%20100");
+    return (payload.data ?? []).map((row) => normalizeSummary(row, "nse-nifty-100")).filter((row) => row.symbol);
+  }, 120).catch(() => ({
+    data: nifty100FallbackSymbols.map((symbol) => ({
+      symbol,
+      companyName: symbol,
+      freshness: makeFreshness("bundled-nifty-100", null, "cached", "Bundled NIFTY 100 fallback")
+    })),
+    freshness: makeFreshness("bundled-nifty-100", null, "cached", "Bundled NIFTY 100 fallback")
+  }));
+  return result;
 }
 
 export async function getStocks() {
