@@ -3,6 +3,7 @@ import { classifyFreshness, makeFreshness } from "@/lib/freshness";
 import { daysForRange, formatNseDate } from "@/lib/ranges";
 import { readCache, writeCache } from "@/lib/store";
 import { getYahooHistory, getYahooQuote } from "@/lib/yahoo/service";
+import { getGoogleFundamentals } from "@/lib/google/service";
 import stockUniverseFallback from "@/data/stockUniverseFallback.json";
 import { fetchNseJson, fetchNseText } from "./client";
 import { normalizeHistory, normalizeQuote, normalizeSummary } from "./normalize";
@@ -11,6 +12,31 @@ const equityCsvUrl = "https://archives.nseindia.com/content/equities/EQUITY_L.cs
 
 function withFreshness<T extends { freshness?: Freshness }>(data: T, freshness: Freshness): T {
   return { ...data, freshness };
+}
+
+function refreshMetrics(detail: StockDetail) {
+  detail.metrics = [
+    { label: "Last Price", value: detail.lastPrice ?? null },
+    { label: "Change %", value: detail.pChange ?? null },
+    { label: "PE", value: detail.pe ?? null },
+    { label: "PB", value: detail.pb ?? null },
+    { label: "VWAP", value: detail.vwap ?? null },
+    { label: "Volume", value: detail.totalTradedVolume ?? null },
+    { label: "52W High", value: detail.yearHigh ?? null },
+    { label: "52W Low", value: detail.yearLow ?? null }
+  ];
+  return detail;
+}
+
+async function enrichFundamentals(detail: StockDetail) {
+  if (detail.pe !== undefined && detail.marketCap !== undefined) return detail;
+  const fundamentals = await getGoogleFundamentals(detail.symbol).catch(() => null);
+  if (!fundamentals) return detail;
+  return refreshMetrics({
+    ...detail,
+    pe: detail.pe ?? fundamentals.pe,
+    marketCap: detail.marketCap ?? fundamentals.marketCap
+  });
 }
 
 function bundledStockUniverse(message = "Bundled stock list for fast initial load") {
@@ -110,7 +136,7 @@ export async function getStockQuote(symbol: string) {
   const result = await liveOrCache<StockDetail>(`quote-${normalized}`, "nse-quote-equity", async () => {
     try {
       const payload = await fetchNseJson<Record<string, any>>(`/api/quote-equity?symbol=${encodeURIComponent(normalized)}`);
-      return normalizeQuote(normalized, payload, "nse-quote-equity");
+      return enrichFundamentals(normalizeQuote(normalized, payload, "nse-quote-equity"));
     } catch {
       return getYahooQuote(normalized);
     }

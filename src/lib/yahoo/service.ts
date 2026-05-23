@@ -1,5 +1,6 @@
 import type { Candle, StockDetail } from "@/types";
 import { makeFreshness } from "@/lib/freshness";
+import { getGoogleFundamentals, type GoogleFundamentals } from "@/lib/google/service";
 
 type YahooChartResponse = {
   chart?: {
@@ -32,6 +33,20 @@ type YahooChartResponse = {
 };
 
 const numberOrUndefined = (value: unknown) => (typeof value === "number" && Number.isFinite(value) ? value : undefined);
+
+function applyMetrics(detail: StockDetail) {
+  detail.metrics = [
+    { label: "Last Price", value: detail.lastPrice ?? null },
+    { label: "Change %", value: detail.pChange ?? null },
+    { label: "PE", value: detail.pe ?? null },
+    { label: "PB", value: detail.pb ?? null },
+    { label: "VWAP", value: detail.vwap ?? null },
+    { label: "Volume", value: detail.totalTradedVolume ?? null },
+    { label: "52W High", value: detail.yearHigh ?? null },
+    { label: "52W Low", value: detail.yearLow ?? null }
+  ];
+  return detail;
+}
 
 function yahooRange(range: string | null) {
   switch (range) {
@@ -139,6 +154,7 @@ export async function getYahooQuote(symbol: string): Promise<StockDetail> {
   const change = previousClose === undefined ? undefined : lastPrice - previousClose;
   const pChange = previousClose === undefined || previousClose === 0 ? undefined : (change! / previousClose) * 100;
   const freshness = makeFreshness("yahoo-quote", new Date().toISOString(), "fresh");
+  const fundamentals: GoogleFundamentals = await getGoogleFundamentals(normalized).catch(() => ({}));
   const detail: StockDetail = {
     symbol: normalized,
     companyName: meta?.longName ?? meta?.shortName ?? normalized,
@@ -151,20 +167,11 @@ export async function getYahooQuote(symbol: string): Promise<StockDetail> {
     dayLow: numberOrUndefined(meta?.regularMarketDayLow),
     yearHigh: numberOrUndefined(meta?.fiftyTwoWeekHigh),
     yearLow: numberOrUndefined(meta?.fiftyTwoWeekLow),
+    marketCap: fundamentals.marketCap,
+    pe: fundamentals.pe,
     freshness,
     metrics: []
   };
 
-  detail.metrics = [
-    { label: "Last Price", value: detail.lastPrice ?? null },
-    { label: "Change %", value: detail.pChange ?? null },
-    { label: "PE", value: detail.pe ?? null },
-    { label: "PB", value: detail.pb ?? null },
-    { label: "VWAP", value: detail.vwap ?? null },
-    { label: "Volume", value: detail.totalTradedVolume ?? null },
-    { label: "52W High", value: detail.yearHigh ?? null },
-    { label: "52W Low", value: detail.yearLow ?? null }
-  ];
-
-  return detail;
+  return applyMetrics(detail);
 }
