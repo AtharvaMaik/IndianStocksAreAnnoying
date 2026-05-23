@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/AppShell";
 import { FreshnessBadge } from "@/components/FreshnessBadge";
+import { HydratedStockTable } from "@/components/HydratedStockTable";
 import { PriceChart } from "@/components/charts";
 import { StockCard } from "@/components/StockCard";
 import { StockTable } from "@/components/StockTable";
@@ -59,7 +60,7 @@ export default async function DashboardPage() {
             </div>
             <FreshnessBadge freshness={top100Response.freshness} />
           </div>
-          <StockTable stocks={top100Response.data} limit={20} />
+          <HydratedStockTable stocks={top100Response.data} limit={20} />
           <div style={{ marginTop: 12 }}>
             <a className="ghost-button" href="/stocks">
               Browse all stocks

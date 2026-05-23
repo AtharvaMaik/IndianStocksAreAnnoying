@@ -1,76 +1,26 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { StockSummary } from "@/types";
-import { StockTable } from "./StockTable";
+import { HydratedStockTable } from "./HydratedStockTable";
 
 export function StockSearchTable({ stocks }: { stocks: StockSummary[] }) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("symbol");
-  const [hydrated, setHydrated] = useState<Record<string, StockSummary>>({});
-  const [visibleSymbols, setVisibleSymbols] = useState<Record<string, boolean>>({});
-  const hydratedStocks = useMemo(
-    () => stocks.map((stock) => (hydrated[stock.symbol] ? { ...stock, ...hydrated[stock.symbol] } : stock)),
-    [hydrated, stocks]
-  );
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     const rows = normalized
-      ? hydratedStocks.filter(
+      ? stocks.filter(
           (stock) =>
             stock.symbol.toLowerCase().includes(normalized) || stock.companyName.toLowerCase().includes(normalized)
         )
-      : hydratedStocks;
+      : stocks;
     return [...rows].sort((a, b) => {
       if (sort === "change") return (b.pChange ?? -Infinity) - (a.pChange ?? -Infinity);
       if (sort === "volume") return (b.totalTradedVolume ?? -Infinity) - (a.totalTradedVolume ?? -Infinity);
       return a.symbol.localeCompare(b.symbol);
     });
-  }, [hydratedStocks, query, sort]);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    const missing = filtered
-      .filter(
-        (stock, index) =>
-          stock.lastPrice === undefined && !hydrated[stock.symbol] && (index < 24 || visibleSymbols[stock.symbol])
-      )
-      .slice(0, 24)
-      .map((stock) => stock.symbol);
-
-    async function hydrateVisibleRows() {
-      for (let index = 0; index < missing.length; index += 4) {
-        if (controller.signal.aborted) return;
-        const batch = missing.slice(index, index + 4);
-        const quotes = await Promise.all(
-          batch.map(async (symbol) => {
-            try {
-              const response = await fetch(`/api/stocks/${encodeURIComponent(symbol)}?fast=1`, {
-                cache: "no-store",
-                signal: controller.signal
-              });
-              if (!response.ok) return null;
-              const payload = await response.json();
-              return payload.data ? [symbol, payload.data] : null;
-            } catch {
-              return null;
-            }
-          })
-        );
-        const next = Object.fromEntries(quotes.filter((quote): quote is [string, StockSummary] => Boolean(quote)));
-        if (Object.keys(next).length) {
-          setHydrated((current) => ({ ...current, ...next }));
-        }
-      }
-    }
-
-    hydrateVisibleRows();
-    return () => controller.abort();
-  }, [filtered, hydrated, visibleSymbols]);
-
-  const markRowVisible = useCallback((symbol: string) => {
-    setVisibleSymbols((current) => (current[symbol] ? current : { ...current, [symbol]: true }));
-  }, []);
+  }, [query, sort, stocks]);
 
   return (
     <div className="panel">
@@ -93,7 +43,7 @@ export function StockSearchTable({ stocks }: { stocks: StockSummary[] }) {
           <option value="volume">Volume</option>
         </select>
       </div>
-      <StockTable stocks={filtered} onRowVisible={markRowVisible} />
+      <HydratedStockTable stocks={filtered} />
     </div>
   );
 }
