@@ -3,6 +3,7 @@ import { classifyFreshness, makeFreshness } from "@/lib/freshness";
 import { daysForRange, formatNseDate } from "@/lib/ranges";
 import { readCache, writeCache } from "@/lib/store";
 import { getYahooHistory, getYahooQuote } from "@/lib/yahoo/service";
+import stockUniverseFallback from "@/data/stockUniverseFallback.json";
 import { fetchNseJson, fetchNseText } from "./client";
 import { normalizeHistory, normalizeQuote, normalizeSummary } from "./normalize";
 
@@ -53,18 +54,30 @@ function parseCsvLine(line: string) {
 }
 
 export async function getStockUniverse() {
-  return liveOrCache<StockSummary[]>("stock-universe-v2", "nse-equity-list", async () => {
-    const text = await fetchNseText(equityCsvUrl);
-    const [headerLine, ...rows] = text.trim().split(/\r?\n/);
-    const headers = parseCsvLine(headerLine);
-    return rows
-      .map((line) => {
-        const values = parseCsvLine(line);
-        const row = Object.fromEntries(headers.map((header, index) => [header, values[index]]));
-        return normalizeSummary(row, "nse-equity-list");
-      })
-      .filter((stock) => stock.symbol && stock.series === "EQ");
-  }, 3600);
+  try {
+    return await liveOrCache<StockSummary[]>("stock-universe-v2", "nse-equity-list", async () => {
+      const text = await fetchNseText(equityCsvUrl);
+      const [headerLine, ...rows] = text.trim().split(/\r?\n/);
+      const headers = parseCsvLine(headerLine);
+      return rows
+        .map((line) => {
+          const values = parseCsvLine(line);
+          const row = Object.fromEntries(headers.map((header, index) => [header, values[index]]));
+          return normalizeSummary(row, "nse-equity-list");
+        })
+        .filter((stock) => stock.symbol && stock.series === "EQ");
+    }, 3600);
+  } catch (error) {
+    return {
+      data: stockUniverseFallback as StockSummary[],
+      freshness: makeFreshness(
+        "bundled-nse-equity-list",
+        null,
+        "cached",
+        error instanceof Error ? `Bundled stock list fallback: ${error.message}` : "Bundled stock list fallback"
+      )
+    };
+  }
 }
 
 export async function getLiveMarketStocks() {

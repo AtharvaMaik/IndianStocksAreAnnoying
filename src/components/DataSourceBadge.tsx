@@ -8,6 +8,8 @@ function sourceLabel(source?: string) {
       return "NSE Live";
     case "nse-equity-list":
       return "NSE List";
+    case "bundled-nse-equity-list":
+      return "Bundled NSE List";
     case "nse-yahoo-history":
       return "NSE/Yahoo";
     case "nse-historical-equity":
