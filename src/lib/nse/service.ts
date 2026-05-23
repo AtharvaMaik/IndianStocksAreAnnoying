@@ -20,22 +20,6 @@ function bundledStockUniverse(message = "Bundled stock list for fast initial loa
   };
 }
 
-function timeoutAfter<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
-  return new Promise((resolve, reject) => {
-    const id = setTimeout(() => reject(new Error(message)), ms);
-    promise.then(
-      (value) => {
-        clearTimeout(id);
-        resolve(value);
-      },
-      (error) => {
-        clearTimeout(id);
-        reject(error);
-      }
-    );
-  });
-}
-
 async function liveOrCache<T>(key: string, source: string, fetchLive: () => Promise<T>, maxFresh = 60) {
   try {
     const data = await fetchLive();
@@ -107,14 +91,7 @@ export async function getLiveMarketStocks() {
 }
 
 export async function getStocks() {
-  if (process.env.VERCEL) {
-    return bundledStockUniverse("Bundled stock list for fast Vercel first paint");
-  }
-  const universePromise = getStockUniverse();
-  const [universe, live] = await Promise.allSettled([
-    universePromise,
-    timeoutAfter(getLiveMarketStocks(), 1800, "Live market list timed out")
-  ]);
+  const [universe, live] = await Promise.allSettled([getStockUniverse(), getLiveMarketStocks()]);
   const universeData = universe.status === "fulfilled" ? universe.value.data : [];
   const liveData = live.status === "fulfilled" ? live.value.data : [];
   const liveBySymbol = new Map(liveData.map((stock) => [stock.symbol, stock]));

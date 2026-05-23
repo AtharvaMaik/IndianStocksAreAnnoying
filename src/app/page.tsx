@@ -8,6 +8,8 @@ import { getStockHistory, getStocks } from "@/lib/nse/service";
 import { getWatchlist } from "@/lib/store";
 import { makeFreshness } from "@/lib/freshness";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage() {
   const [stocksResponse, watchlist] = await Promise.all([getStocks(), getWatchlist()]);
   const stocks = stocksResponse.data.filter((stock) => stock.symbol);
@@ -15,10 +17,7 @@ export default async function DashboardPage() {
   const featured = (pricedStocks.length ? pricedStocks : stocks).slice(0, 4);
   const chartSymbol = pricedStocks[0]?.symbol;
   const history = chartSymbol
-    ? await Promise.race([
-        getStockHistory(chartSymbol, "1M"),
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Dashboard chart timed out")), 2200))
-      ]).catch((error) => ({
+    ? await getStockHistory(chartSymbol, "1M").catch((error) => ({
         data: [],
         freshness: makeFreshness("nse-historical-equity", null, "error", error instanceof Error ? error.message : "No candles")
       }))

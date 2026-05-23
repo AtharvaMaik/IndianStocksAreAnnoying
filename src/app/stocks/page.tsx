@@ -3,6 +3,8 @@ import { FreshnessBadge } from "@/components/FreshnessBadge";
 import { StockSearchTable } from "@/components/StockSearchTable";
 import { getStocks } from "@/lib/nse/service";
 
+export const dynamic = "force-dynamic";
+
 export default async function StocksPage() {
   const response = await getStocks();
   return (
@@ -20,4 +22,3 @@ export default async function StocksPage() {
     </AppShell>
   );
 }
-
