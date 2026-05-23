@@ -14,7 +14,10 @@ export default async function DashboardPage() {
   const featured = stocks.filter((stock) => stock.lastPrice !== undefined).slice(0, 4);
   const chartSymbol = featured[0]?.symbol ?? stocks[0]?.symbol;
   const history = chartSymbol
-    ? await getStockHistory(chartSymbol, "1M").catch((error) => ({
+    ? await Promise.race([
+        getStockHistory(chartSymbol, "1M"),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Dashboard chart timed out")), 2200))
+      ]).catch((error) => ({
         data: [],
         freshness: makeFreshness("nse-historical-equity", null, "error", error instanceof Error ? error.message : "No candles")
       }))

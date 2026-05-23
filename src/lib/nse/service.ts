@@ -13,6 +13,29 @@ function withFreshness<T extends { freshness?: Freshness }>(data: T, freshness: 
   return { ...data, freshness };
 }
 
+function bundledStockUniverse(message = "Bundled stock list for fast initial load") {
+  return {
+    data: stockUniverseFallback as StockSummary[],
+    freshness: makeFreshness("bundled-nse-equity-list", null, "cached", message)
+  };
+}
+
+function timeoutAfter<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const id = setTimeout(() => reject(new Error(message)), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(id);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(id);
+        reject(error);
+      }
+    );
+  });
+}
+
 async function liveOrCache<T>(key: string, source: string, fetchLive: () => Promise<T>, maxFresh = 60) {
   try {
     const data = await fetchLive();
@@ -68,15 +91,9 @@ export async function getStockUniverse() {
         .filter((stock) => stock.symbol && stock.series === "EQ");
     }, 3600);
   } catch (error) {
-    return {
-      data: stockUniverseFallback as StockSummary[],
-      freshness: makeFreshness(
-        "bundled-nse-equity-list",
-        null,
-        "cached",
-        error instanceof Error ? `Bundled stock list fallback: ${error.message}` : "Bundled stock list fallback"
-      )
-    };
+    return bundledStockUniverse(
+      error instanceof Error ? `Bundled stock list fallback: ${error.message}` : "Bundled stock list fallback"
+    );
   }
 }
 
@@ -90,7 +107,13 @@ export async function getLiveMarketStocks() {
 }
 
 export async function getStocks() {
-  const [universe, live] = await Promise.allSettled([getStockUniverse(), getLiveMarketStocks()]);
+  const universePromise = process.env.VERCEL
+    ? Promise.resolve(bundledStockUniverse("Bundled stock list for fast Vercel first paint"))
+    : getStockUniverse();
+  const [universe, live] = await Promise.allSettled([
+    universePromise,
+    timeoutAfter(getLiveMarketStocks(), 1800, "Live market list timed out")
+  ]);
   const universeData = universe.status === "fulfilled" ? universe.value.data : [];
   const liveData = live.status === "fulfilled" ? live.value.data : [];
   const liveBySymbol = new Map(liveData.map((stock) => [stock.symbol, stock]));
